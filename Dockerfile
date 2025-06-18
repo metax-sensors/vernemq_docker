@@ -1,19 +1,20 @@
-FROM erlang:26.2.5.0-alpine as builder
+ARG VERNEMQ_VERSION="2.1.0"
 
-MAINTAINER markus.jankowski@bestsens.de
+FROM erlang:27.3.3-alpine AS builder 
+ARG VERNEMQ_VERSION
 
 RUN apk update && apk add --no-cache --update git libressl-dev snappy-dev build-base bsd-compat-headers
-
 RUN mkdir /vernemq_build && \
 	cd /vernemq_build && \
-	git clone https://github.com/vernemq/vernemq -b 2.0.1 . && \
+	git clone https://github.com/vernemq/vernemq -b ${VERNEMQ_VERSION} . && \
 	make rel && \
 	mkdir /vernemq_docker && \
 	cd /vernemq_docker && \
 	git clone https://github.com/vernemq/docker-vernemq -b 2.0.1 .
 
-FROM alpine:3.20.0
 
+FROM alpine:3.22
+ARG VERNEMQ_VERSION
 COPY --from=builder /vernemq_build/_build/default/rel/vernemq /vernemq
 COPY --from=builder --chown=10000:10000 /vernemq_docker/bin/vernemq.sh /usr/sbin/start_vernemq
 COPY --from=builder --chown=10000:10000 /vernemq_docker/bin/join_cluster.sh /usr/sbin/join_cluster
@@ -30,7 +31,7 @@ RUN apk --no-cache --update --available upgrade && \
 ENV DOCKER_VERNEMQ_KUBERNETES_LABEL_SELECTOR="app=vernemq" \
     DOCKER_VERNEMQ_LOG__CONSOLE=console \
     PATH="/vernemq/bin:$PATH" \
-    VERNEMQ_VERSION="2.0.1"
+    VERNEMQ_VERSION="${VERNEMQ_VERSION}"
 
 WORKDIR /vernemq
 

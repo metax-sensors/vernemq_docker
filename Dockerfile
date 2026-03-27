@@ -1,4 +1,4 @@
-ARG VERNEMQ_VERSION="2.1.0"
+ARG VERNEMQ_VERSION="2.1.1"
 
 FROM erlang:27.3.3-alpine AS builder 
 ARG VERNEMQ_VERSION
@@ -10,10 +10,10 @@ RUN mkdir /vernemq_build && \
 	make rel && \
 	mkdir /vernemq_docker && \
 	cd /vernemq_docker && \
-	git clone https://github.com/vernemq/docker-vernemq -b 2.0.1 .
+	git clone https://github.com/vernemq/docker-vernemq -b rel-${VERNEMQ_VERSION} .
 
 
-FROM alpine:3.22
+FROM alpine:3.22.1
 ARG VERNEMQ_VERSION
 COPY --from=builder /vernemq_build/_build/default/rel/vernemq /vernemq
 COPY --from=builder --chown=10000:10000 /vernemq_docker/bin/vernemq.sh /usr/sbin/start_vernemq
